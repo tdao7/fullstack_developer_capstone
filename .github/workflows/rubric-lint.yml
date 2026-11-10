@@ -32,4 +32,8 @@ jobs:
       - name: Install dependencies
         run: npm install --no-save eslint@9
       - name: Run Linter
-        run: npx eslint --no-config-lookup --rule 'no-unexpected-multiline: error' --rule 'valid-typeof: error' server/frontend/static/site.js
+        run: >-
+          npx eslint --no-config-lookup
+          --rule 'no-unexpected-multiline: error'
+          --rule 'valid-typeof: error'
+          server/frontend/static/site.js
