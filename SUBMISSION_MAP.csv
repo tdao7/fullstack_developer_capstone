@@ -1,0 +1,28 @@
+Question,Submission type,Expected filename or file,Content / URL,Verification requirement
+1,URL,README.md,https://github.com/tdao7/ibm-dealership-capstone/blob/main/README.md,Only after public GitHub publishing
+2,TEXT,django_server,evidence/text/django_server,Real Django server log from collect_all_text.sh
+3,URL,About.html,https://github.com/tdao7/ibm-dealership-capstone/blob/main/server/frontend/static/About.html,Only after public GitHub publishing
+4,URL,Contact.html,https://github.com/tdao7/ibm-dealership-capstone/blob/main/server/frontend/static/Contact.html,Only after public GitHub publishing
+5,TEXT,loginuser,evidence/text/loginuser,Real curl + output showing Authenticated
+6,TEXT,logoutuser,evidence/text/logoutuser,Real curl + output showing Logged out
+7,URL,Register.jsx,https://github.com/tdao7/ibm-dealership-capstone/blob/main/server/frontend/src/components/Register/Register.jsx,Only after public GitHub publishing
+8,TEXT,getdealerreviews,evidence/text/getdealerreviews,Actual curl response with dealer reviews
+9,TEXT,getalldealers,evidence/text/getalldealers,Actual curl response listing all dealers
+10,TEXT,getdealerbyid,evidence/text/getdealerbyid,Actual curl response with dealer details
+11,TEXT,getdealersbyState,evidence/text/getdealersbyState,Kansas dealer(s) from /djangoapp/get_dealers/Kansas
+12,UPLOAD,admin_login.png,screenshots/admin_login.png,Actual logged-in Django admin root page
+13,UPLOAD,admin_logout.png,screenshots/admin_logout.png,Actual Django admin logout page
+14,TEXT,getallcarmakes,evidence/text/getallcarmakes,All car makes/models returned by API
+15,TEXT,analyzereview,evidence/text/analyzereview,Live sentiment result for Fantastic services
+16,UPLOAD,get_dealers.png,screenshots/get_dealers.png,Home dealers visible before login
+17,UPLOAD,get_dealers_loggedin.png,screenshots/get_dealers_loggedin.png,Username + Review Dealer; address bar required
+18,UPLOAD,dealersbystate.png,screenshots/dealersbystate.png,State-filtered Kansas dealers; address bar required
+19,UPLOAD,dealer_id_reviews.png,screenshots/dealer_id_reviews.png,Dealer details/reviews; address bar required
+20,UPLOAD,dealership_review_submission.png,screenshots/dealership_review_submission.png,Review form populated before submit
+21,UPLOAD,added_review.png,screenshots/added_review.png,Review present after successful POST
+22,TEXT,CI_CD,evidence/text/CI_CD,ONLY from an actual successful GitHub Actions run
+23,TEXT,deploymentURL,evidence/text/deploymentURL,ONLY after a real public deployment
+24,UPLOAD,deployed_landingpage.png,screenshots/deployed_landingpage.png,Actual live deployment home page
+25,UPLOAD,deployed_loggedin.png,screenshots/deployed_loggedin.png,Actual live logged-in page and username
+26,UPLOAD,deployed_dealer_detail.png,screenshots/deployed_dealer_detail.png,Actual live dealer details page
+27,UPLOAD,deployed_add_review.png,screenshots/deployed_add_review.png,Actual live newly posted review

@@ -1,0 +1,6 @@
+*{box-sizing:border-box}.register-page{min-height:100vh;background:#f1f5f9;font-family:Inter,system-ui,Arial,sans-serif;color:#172b4d}
+.register-nav{background:#123c5b;display:flex;gap:28px;padding:20px 7%}.register-nav a{color:white;text-decoration:none;font-weight:600}.register-nav a:first-child{margin-right:auto;font-size:22px}
+.register-panel{max-width:530px;margin:65px auto;background:white;padding:36px 42px;border-radius:18px;box-shadow:0 12px 34px rgba(31,41,55,.12)}
+.register-panel h1{margin:0;font-size:32px}.register-panel p{color:#65758b}.register-panel form{display:flex;flex-direction:column;gap:9px;margin-top:26px}
+.register-panel label{font-weight:650;font-size:14px;margin-top:5px}.register-panel input{font:inherit;border-radius:8px;border:1px solid #b8c6d5;padding:12px;outline-color:#258cc3}
+.register-panel button{border:none;border-radius:8px;padding:14px;background:#0878b4;color:white;font-weight:700;font-size:17px;cursor:pointer;margin-top:14px}.register-panel button:disabled{opacity:.6}.register-message{padding:14px;background:#eaf7ff;border-radius:8px;margin-top:22px}
