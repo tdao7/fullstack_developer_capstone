@@ -1,44 +1,82 @@
 #!/usr/bin/env bash
-# Collect actual Django/API outputs after local setup. Does NOT invent CI or deployment results.
+# Collect real API output and a real, SUCCESSFUL Django server-startup transcript.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-mkdir -p "$ROOT/evidence/text"
-printf "%s\n\n%s\n" "Command: cd server && python manage.py runserver 127.0.0.1:8000 --noreload" "Output:" > "$ROOT/evidence/text/django_server"
 cd "$ROOT"
 source server/.venv/bin/activate
 export CAPSTONE_DEMO_PASSWORD="${CAPSTONE_DEMO_PASSWORD:-CapstoneDemo2026!}"
 export CAPSTONE_ADMIN_PASSWORD="${CAPSTONE_ADMIN_PASSWORD:-CourseAdmin2026!}"
+mkdir -p evidence/text
+
+# A truly free listener port. Avoid recording a port-conflict as successful evidence.
+PORT="$(python - <<'PY'
+import socket
+with socket.socket() as s:
+ s.bind(('127.0.0.1',0))
+ print(s.getsockname()[1])
+PY
+)"
+BASE="http://127.0.0.1:$PORT"
 (cd server && python manage.py makemigrations djangoapp --noinput && python manage.py migrate --noinput && python manage.py seed_demo >/dev/null)
+LOG="$ROOT/evidence/text/django_server.log"
 (
  cd server
- PYTHONUNBUFFERED=1 python manage.py runserver 127.0.0.1:8000 --noreload 2>&1
-) >> "$ROOT/evidence/text/django_server" &
+ exec python -u manage.py runserver "127.0.0.1:$PORT" --noreload
+) > "$LOG" 2>&1 &
 SERVER_PID=$!
-(python -u server/sentiment_service.py) > "$ROOT/evidence/text/sentiment_server" 2>&1 &
-SENTIMENT_PID=$!
-trap 'kill "$SERVER_PID" "$SENTIMENT_PID" 2>/dev/null || true' EXIT
-for _ in $(seq 1 45); do
- if curl -fsS 'http://127.0.0.1:8000/djangoapp/get_dealers' >/dev/null;then break;fi
- sleep 1
+trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+ready=0
+for _ in $(seq 1 80); do
+ if curl --max-time 2 -fsS "$BASE/djangoapp/get_dealers" >/dev/null 2>&1; then ready=1;break;fi
+ if ! kill -0 "$SERVER_PID" 2>/dev/null;then break;fi
+ sleep .5
 done
-curl -fsS 'http://127.0.0.1:8000/djangoapp/get_dealers' >/dev/null
+if [[ "$ready" != 1 ]];then echo "Django failed to start. Full log:";cat "$LOG";exit 1;fi
 sleep 1
-record(){ local output="$1";local cmd="$2";shift 2
- local response;response="$(curl -sS "$@")"
- printf '%s\n\n%s\n\n%s\n' "Command: $cmd" "Output:" "$response" > "$ROOT/evidence/text/$output"
- printf '%s: %s\n' "$output" "$response"
+if ! grep -q 'Starting development server at' "$LOG"; then
+ echo "Missing successful start marker" >&2;cat "$LOG";exit 1
+fi
+if grep -q 'port is already in use' "$LOG"; then
+ echo "The server log contains a port conflict; refusing to submit as success." >&2;exit 1
+fi
+printf 'Command: cd server && python manage.py runserver 127.0.0.1:%s --noreload\n\nOutput:\n\n' "$PORT" > evidence/text/django_server
+cat "$LOG" >> evidence/text/django_server
+printf '\nSuccessfully started on %s\n' "$BASE"
+
+record() {
+ local name="$1";local path="$2";shift 2
+ local response
+ response="$(curl -fsS --max-time 15 "$@" "$BASE$path")"
+ printf 'Command: curl -sS %s\n\nOutput:\n\n%s\n' "$BASE$path" "$response" > "evidence/text/$name"
+ printf '%s: %s\n' "$name" "${response:0:450}"
 }
-record loginuser 'curl -sS -c session.cookie -X POST http://127.0.0.1:8000/djangoapp/login -H "Content-Type: application/json" -d '\''{"userName":"capstone_demo","password":"********"}'\''' -c "$ROOT/evidence/session.cookie" -X POST 'http://127.0.0.1:8000/djangoapp/login' -H 'Content-Type: application/json' -d "{\"userName\":\"capstone_demo\",\"password\":\"$CAPSTONE_DEMO_PASSWORD\"}"
-record logoutuser 'curl -sS -b session.cookie http://127.0.0.1:8000/djangoapp/logout' -b "$ROOT/evidence/session.cookie" 'http://127.0.0.1:8000/djangoapp/logout'
-record getdealerreviews 'curl -sS http://127.0.0.1:8000/djangoapp/reviews/dealer/1' 'http://127.0.0.1:8000/djangoapp/reviews/dealer/1'
-record getalldealers 'curl -sS http://127.0.0.1:8000/djangoapp/get_dealers' 'http://127.0.0.1:8000/djangoapp/get_dealers'
-record getdealerbyid 'curl -sS http://127.0.0.1:8000/djangoapp/dealer/1' 'http://127.0.0.1:8000/djangoapp/dealer/1'
-record getdealersbyState 'curl -sS http://127.0.0.1:8000/djangoapp/get_dealers/Kansas' 'http://127.0.0.1:8000/djangoapp/get_dealers/Kansas'
-record getallcarmakes 'curl -sS http://127.0.0.1:8000/djangoapp/get_cars' 'http://127.0.0.1:8000/djangoapp/get_cars'
-record analyzereview 'curl -sS http://127.0.0.1:5050/analyze/Fantastic%20services' 'http://127.0.0.1:5050/analyze/Fantastic%20services'
-rm -f "$ROOT/evidence/session.cookie"
-cat <<'MSG'
-All local text evidence files saved to evidence/text.
-Q22 CI_CD is created ONLY after a real successful GitHub Actions workflow.
-Q23 deploymentURL is created ONLY after an actual accessible public deployment.
-MSG
+# Authentication: keep session cookie. Mask password in evidence command line.
+login="$(curl -fsS --max-time 15 -c evidence/session.cookie -H 'Content-Type: application/json' -X POST -d "{\"userName\":\"capstone_demo\",\"password\":\"$CAPSTONE_DEMO_PASSWORD\"}" "$BASE/djangoapp/login")"
+printf 'Command: curl -sS -c session.cookie -X POST %s/djangoapp/login -H "Content-Type: application/json" -d '\''{"userName":"capstone_demo","password":"********"}'\''\n\nOutput:\n\n%s\n' "$BASE" "$login" > evidence/text/loginuser
+logout="$(curl -fsS --max-time 15 -b evidence/session.cookie "$BASE/djangoapp/logout")"
+printf 'Command: curl -sS -b session.cookie %s/djangoapp/logout\n\nOutput:\n\n%s\n' "$BASE" "$logout" > evidence/text/logoutuser
+python - "$login" "$logout" <<'PY'
+import json,sys
+assert json.loads(sys.argv[1])['status']=='Authenticated'
+assert json.loads(sys.argv[2])=={'userName':'','status':'Logged out'}
+PY
+record getdealerreviews /djangoapp/reviews/dealer/1
+record getalldealers /djangoapp/get_dealers
+record getdealerbyid /djangoapp/dealer/1
+record getdealersbyState /djangoapp/get_dealers/Kansas
+record getallcarmakes /djangoapp/get_cars
+python - "$BASE" <<'PY'
+import urllib.request,json,sys
+base=sys.argv[1]
+def get(path):return json.load(urllib.request.urlopen(base+path))
+dealers=get('/djangoapp/get_dealers')['dealers']
+if len(dealers)!=50:
+ raise SystemExit(f'Q9 NOT READY: found {len(dealers)} dealers instead of 50. Run bash refresh_official_data.sh FIRST.')
+assert all('purchase_date' in r for r in get('/djangoapp/reviews/dealer/1')['reviews'])
+assert all(set(('CarModel','CarMake')).issubset(r) for r in get('/djangoapp/get_cars')['CarModels'])
+print('Verified Q8/Q9/Q14 rubric format and 50 official dealer records.')
+PY
+record analyzereview /djangoapp/analyze/Fantastic%20services
+# Q15 command points to in-process Django sentiment endpoint; valid actual result, no 5050 collision.
+rm -f evidence/session.cookie
+printf '\nSaved real text evidence in evidence/text.\n'

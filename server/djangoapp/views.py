@@ -1,5 +1,6 @@
 """Django views; demo data is explicitly fictional, API output is real when Django runs."""
 import json
+from datetime import date
 from pathlib import Path
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
@@ -60,9 +61,8 @@ def registration(request):
 @csrf_exempt  # Demo curl compatibility only.
 def logout_request(request):
  if request.method not in ('GET','POST'):return JsonResponse({'error':'Method not allowed'},status=405)
- old=request.user.username if request.user.is_authenticated else ''
  logout(request)
- return JsonResponse({'userName':old,'status':'Logged out'})
+ return JsonResponse({'userName':'','status':'Logged out'})
 
 @require_GET
 def get_dealerships(request):
@@ -87,7 +87,7 @@ def get_dealer_reviews(request,dealer_id):
  if _wants_html(request):return dealer_page(request,dealer_id)
  if not any(d['id']==dealer_id for d in DEALERS):
   return JsonResponse({'status':404,'error':'Dealer not found'},status=404)
- reviews=list(Review.objects.filter(dealership=dealer_id).order_by('id').values('id','dealership','name','purchase','review','car_make','car_model','car_year','sentiment'))
+ reviews=list(Review.objects.filter(dealership=dealer_id).order_by('-id').values('id','dealership','name','purchase','purchase_date','review','car_make','car_model','car_year','sentiment'))
  return JsonResponse({'status':200,'reviews':reviews})
 
 @require_GET
@@ -95,7 +95,9 @@ def get_cars(request):
  makes=[]
  for mk in CarMake.objects.prefetch_related('models').order_by('id'):
   makes.append({'id':mk.id,'name':mk.name,'description':mk.description,'models':[{'id':cm.id,'name':cm.name,'type':cm.type,'year':cm.year} for cm in mk.models.all()]})
- return JsonResponse({'status':200,'car_makes':makes,'car_models':[model for make in makes for model in make['models']]})
+ cars = [{'CarModel':model['name'], 'CarMake':make['name']}
+         for make in makes for model in make['models']]
+ return JsonResponse({'CarModels':cars})
 
 @require_GET
 def sentiment_analysis(request,text):
@@ -116,5 +118,9 @@ def add_review(request):
   return JsonResponse({'status':404,'message':'Dealer not found'},status=404)
  text=str(data.get('review','')).strip()
  if not text:return JsonResponse({'status':400,'message':'Review cannot be empty'},status=400)
- obj=Review.objects.create(dealership=dealer_id,name=request.user.get_full_name() or request.user.username,purchase=bool(data.get('purchase',False)),review=text,car_make=str(data.get('car_make','')),car_model=str(data.get('car_model','')),car_year=year,sentiment=analyze_text(text))
+ purchase_date=None
+ if data.get('purchase_date'):
+  try: purchase_date=date.fromisoformat(str(data['purchase_date']))
+  except ValueError: return JsonResponse({'status':400,'message':'Invalid purchase_date'},status=400)
+ obj=Review.objects.create(dealership=dealer_id,name=request.user.get_full_name() or request.user.username,purchase=bool(data.get('purchase',False)),purchase_date=purchase_date,review=text,car_make=str(data.get('car_make','')),car_model=str(data.get('car_model','')),car_year=year,sentiment=analyze_text(text))
  return JsonResponse({'status':201,'message':'Review added successfully','review_id':obj.id},status=201)

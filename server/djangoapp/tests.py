@@ -13,16 +13,24 @@ class CapstoneTests(TestCase):
   self.assertEqual(data['status'],200)
   self.assertGreaterEqual(len(data['dealers']),1)
   self.assertTrue(all(row['state']=='Kansas' for row in data['dealers']))
- def test_all_dealers(self): self.assertEqual(self.client.get('/djangoapp/get_dealers').status_code,200)
- def test_dealer_reviews(self): self.assertGreater(len(self.client.get('/djangoapp/reviews/dealer/1').json()['reviews']),0)
+ def test_all_dealers(self):
+  result=self.client.get('/djangoapp/get_dealers')
+  self.assertEqual(result.status_code,200)
+  if __import__('pathlib').Path(__file__).with_name('official_dealerships.json').exists():
+   self.assertEqual(len(result.json()['dealers']),50)
+ def test_dealer_reviews(self):
+  reviews=self.client.get('/djangoapp/reviews/dealer/1').json()['reviews']
+  self.assertGreater(len(reviews),0)
+  self.assertIn('purchase_date',reviews[0])
  def test_cars(self):
   result=self.client.get('/djangoapp/get_cars').json()
-  self.assertEqual(result['status'],200)
-  self.assertGreater(len(result['car_models']),0)
+  self.assertIn('CarModels',result)
+  self.assertGreater(len(result['CarModels']),0)
+  self.assertIn('CarMake',result['CarModels'][0])
  def test_analyze(self): self.assertEqual(self.client.get('/djangoapp/analyze/Fantastic%20services').json()['sentiment'],'positive')
  def test_login_logout(self):
   self.assertEqual(self.client.post('/djangoapp/login',data='{"userName":"learner","password":"ExamplePass2026!"}',content_type='application/json').json()['status'],'Authenticated')
-  self.assertEqual(self.client.get('/djangoapp/logout').json()['status'],'Logged out')
+  self.assertEqual(self.client.get('/djangoapp/logout').json(), {'userName':'', 'status':'Logged out'})
  def test_review_submission(self):
   self.client.force_login(self.user)
   response=self.client.post('/djangoapp/add_review',data='{"dealership":1,"review":"Fantastic services","car_make":"Toyota","car_model":"Camry","car_year":2023}',content_type='application/json')

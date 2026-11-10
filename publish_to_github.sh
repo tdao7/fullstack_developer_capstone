@@ -8,11 +8,11 @@ login="$(gh api user --jq .login)"
 if [[ ! -d .git ]];then git init -b main;fi
 git add .
 git diff --cached --quiet || git commit -m 'Complete IBM dealership capstone project with Django API and React registration'
-if gh repo view tdao7/ibm-dealership-capstone >/dev/null 2>&1; then
+if gh repo view tdao7/fullstack_developer_capstone >/dev/null 2>&1; then
  git remote remove origin 2>/dev/null || true
- git remote add origin https://github.com/tdao7/ibm-dealership-capstone.git
+ git remote add origin https://github.com/tdao7/fullstack_developer_capstone.git
  git push -u origin main
 else
- gh repo create tdao7/ibm-dealership-capstone --public --source=. --remote=origin --push
+ gh repo create tdao7/fullstack_developer_capstone --public --source=. --remote=origin --push
 fi
-echo 'Public GitHub repository: https://github.com/tdao7/ibm-dealership-capstone'
+echo 'Public GitHub repository: https://github.com/tdao7/fullstack_developer_capstone'

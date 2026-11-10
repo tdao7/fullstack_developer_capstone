@@ -25,13 +25,13 @@ python capture_screenshots.py --base-url http://127.0.0.1:8000
 
 | Question | Type | Answer file / URL | Additional requirement |
 |---:|---|---|---|
-| 1 | URL | `https://github.com/tdao7/ibm-dealership-capstone/blob/main/README.md` | Only after public GitHub publishing |
+| 1 | URL | `https://github.com/tdao7/fullstack_developer_capstone/blob/main/README.md` | Only after public GitHub publishing |
 | 2 | TEXT | `evidence/text/django_server` | Real Django server log from collect_all_text.sh |
-| 3 | URL | `https://github.com/tdao7/ibm-dealership-capstone/blob/main/server/frontend/static/About.html` | Only after public GitHub publishing |
-| 4 | URL | `https://github.com/tdao7/ibm-dealership-capstone/blob/main/server/frontend/static/Contact.html` | Only after public GitHub publishing |
+| 3 | URL | `https://github.com/tdao7/fullstack_developer_capstone/blob/main/server/frontend/static/About.html` | Only after public GitHub publishing |
+| 4 | URL | `https://github.com/tdao7/fullstack_developer_capstone/blob/main/server/frontend/static/Contact.html` | Only after public GitHub publishing |
 | 5 | TEXT | `evidence/text/loginuser` | Real curl + output showing Authenticated |
 | 6 | TEXT | `evidence/text/logoutuser` | Real curl + output showing Logged out |
-| 7 | URL | `https://github.com/tdao7/ibm-dealership-capstone/blob/main/server/frontend/src/components/Register/Register.jsx` | Only after public GitHub publishing |
+| 7 | URL | `https://github.com/tdao7/fullstack_developer_capstone/blob/main/server/frontend/src/components/Register/Register.jsx` | Only after public GitHub publishing |
 | 8 | TEXT | `evidence/text/getdealerreviews` | Actual curl response with dealer reviews |
 | 9 | TEXT | `evidence/text/getalldealers` | Actual curl response listing all dealers |
 | 10 | TEXT | `evidence/text/getdealerbyid` | Actual curl response with dealer details |
@@ -58,10 +58,10 @@ python capture_screenshots.py --base-url http://127.0.0.1:8000
 These strings are **not currently verified public links**:
 
 ```text
-Q1 https://github.com/tdao7/ibm-dealership-capstone/blob/main/README.md
-Q3 https://github.com/tdao7/ibm-dealership-capstone/blob/main/server/frontend/static/About.html
-Q4 https://github.com/tdao7/ibm-dealership-capstone/blob/main/server/frontend/static/Contact.html
-Q7 https://github.com/tdao7/ibm-dealership-capstone/blob/main/server/frontend/src/components/Register/Register.jsx
+Q1 https://github.com/tdao7/fullstack_developer_capstone/blob/main/README.md
+Q3 https://github.com/tdao7/fullstack_developer_capstone/blob/main/server/frontend/static/About.html
+Q4 https://github.com/tdao7/fullstack_developer_capstone/blob/main/server/frontend/static/Contact.html
+Q7 https://github.com/tdao7/fullstack_developer_capstone/blob/main/server/frontend/src/components/Register/Register.jsx
 ```
 
 ## Q11 / Q14 / Q15 cURL commands

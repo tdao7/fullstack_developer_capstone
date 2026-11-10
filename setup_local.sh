@@ -37,6 +37,10 @@ source server/.venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r server/requirements.txt
 python -m django --version
+if [[ ! -f server/djangoapp/official_dealerships.json ]]; then
+  echo "Fetching official IBM dealership dataset (50 records)..."
+  bash refresh_official_data.sh || echo "WARNING: course dataset unavailable; rerun bash refresh_official_data.sh before Q9."
+fi
 
 export CAPSTONE_DEMO_PASSWORD="${CAPSTONE_DEMO_PASSWORD:-CapstoneDemo2026!}"
 export CAPSTONE_ADMIN_PASSWORD="${CAPSTONE_ADMIN_PASSWORD:-CourseAdmin2026!}"

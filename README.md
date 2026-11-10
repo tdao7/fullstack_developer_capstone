@@ -1,7 +1,7 @@
 # IBM Car Dealership Reviews Capstone Project
 
-**Repository:** `ibm-dealership-capstone` (proposed public repository under GitHub account `tdao7`)  
-**Project:** Best Cars — Django / React Car Dealership Review Application
+**Repository:** `fullstack_developer_capstone` (public repository under `tdao7` after completing the renaming step)  
+**Project:** `fullstack_developer_capstone` — Best Cars (Django / React Car Dealership Review Application)
 
 An educational, functional local demonstration for the IBM Full Stack Application Development Capstone. It includes Django authentication, user registration, state-filtered dealer discovery (including Kansas), review creation, car make/model records, sentiment analysis, and an optional React registration component.
 
@@ -73,3 +73,12 @@ python capture_screenshots.py --base-url http://127.0.0.1:8000 --deployment-url 
 | `GET http://127.0.0.1:5050/analyze/Fantastic%20services` | Independent sentiment microservice |
 
 The API returns JSON to cURL and to JavaScript (`Accept: application/json`). For selected read endpoints, a browser requesting `text/html` shows the corresponding frontend page at that same endpoint URL.
+
+## Grader rubric corrections (second submission)
+
+- This repository must be published under **`tdao7/fullstack_developer_capstone`** to match the exact Q1 grader instruction.
+- `bash refresh_official_data.sh` downloads and validates IBM's 50-row dealership dataset. Commit `server/djangoapp/official_dealerships.json` before collecting Q9 or deploying.
+- `bash collect_all_text.sh` chooses a free local port and checks the `Starting development server at` marker; every output is from a real HTTP request.
+- `get_cars` outputs `CarModels` array; `get_dealer_reviews` includes `purchase_date`; logout returns empty `userName` as the assignment's grader requires.
+- `.github/workflows/rubric-lint.yml` provides two independent lint jobs with `Run Linter` steps. Submit logs only after both are green.
+- See [RUBRIC_FIX_GUIDE.md](RUBRIC_FIX_GUIDE.md) for Mac screenshots with genuine browser URL bar and IBM Code Engine deployment requirements.

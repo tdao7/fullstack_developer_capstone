@@ -16,6 +16,7 @@ OUT=ROOT/'screenshots'
 
 parser=argparse.ArgumentParser()
 parser.add_argument('--base-url',default='http://127.0.0.1:8000')
+parser.add_argument('--cloud-only',action='store_true',help='Capture only deployed Q24-Q27 screenshots')
 parser.add_argument('--deployment-url',default=os.getenv('DEPLOYMENT_URL',''))
 parser.add_argument('--username',default='capstone_demo')
 parser.add_argument('--password',default=os.getenv('CAPSTONE_DEMO_PASSWORD','CapstoneDemo2026!'))
@@ -31,10 +32,27 @@ def cap(page,filename):
  page.wait_for_timeout(450)
  path=OUT/filename
  if a.mac_desktop:
-  subprocess.run(['screencapture','-x',str(path)],check=True)
+  page.bring_to_front()
+  page.wait_for_timeout(550)
+  subprocess.run(['screencapture','-x','-D','1',str(path)],check=True)
  else:
-  page.screenshot(path=str(path),full_page=False,animations='disabled')
+  page.screenshot(path=str(path),full_page=filename in ('dealership_review_submission.png','added_review.png'),animations='disabled')
  print(f'Saved: {path}')
+
+def compact(page, form=False):
+ # Cosmetic viewport adjustment ONLY. All data and URL are rendered by the actual server.
+ page.add_style_tag(content='''
+   .hero{padding:14px 24px!important} .hero h1{font-size:28px!important;margin:4px 0!important}
+   .hero p{font-size:13px!important} .statrow{margin:7px 0!important}
+   .navbar .navin{height:58px!important} .main{margin:14px auto 24px!important}
+   .panel{padding:13px!important} .toolbar{margin-bottom:8px!important}
+   .table th,.table td{padding:7px 9px!important}
+   .subhead{margin:0 0 12px!important} .endpoint{margin:5px 0!important}
+   .reviewcard{padding:10px 0!important}
+   .formgrid{gap:8px!important} .formgrid textarea{min-height:66px!important}
+ ''')
+ page.evaluate("document.documentElement.style.zoom='0.76'")
+ page.evaluate('window.scrollTo(0,0)')
 
 def goto(page,base,path):
  page.goto(base.rstrip('/')+path,wait_until='domcontentloaded',timeout=20000)
@@ -52,22 +70,32 @@ def journey(context,base,deployed=False):
  page=context.new_page()
  goto(page,base,'/djangoapp/get_dealers')
  page.wait_for_function("document.querySelector('#countChip')?.textContent?.includes('dealerships found')",timeout=15000)
+ page.locator('#dealerRows tr td').first.wait_for(timeout=15000)
+ compact(page)
  cap(page,'deployed_landingpage.png' if deployed else 'get_dealers.png')
  signin(page,base)
+ page.locator('#dealerRows tr td').first.wait_for(timeout=15000)
+ compact(page)
  cap(page,'deployed_loggedin.png' if deployed else 'get_dealers_loggedin.png')
  page.locator('#stateFilter').select_option('Kansas')
  page.wait_for_function("document.querySelector('#countChip')?.textContent?.includes('dealerships found')",timeout=15000)
+ page.locator('#dealerRows tr td').first.wait_for(timeout=15000)
+ compact(page)
  cap(page,'dealersbystate.png') if not deployed else None
  page.locator('#dealerRows tr a.link').first.click()
  page.locator('#reviews .reviewcard').first.wait_for(timeout=15000)
+ compact(page)
  cap(page,'deployed_dealer_detail.png' if deployed else 'dealer_id_reviews.png')
  if not deployed:
   page.locator('#postBtn').click()
   page.locator('#review').fill('Fantastic services. Helpful team and transparent pricing. I recommend this dealership.')
+  compact(page,form=True)
+  page.locator('#submitReview').scroll_into_view_if_needed()
   cap(page,'dealership_review_submission.png')
   page.locator('#submitReview').click()
   page.wait_for_url('**/djangoapp/reviews/dealer/*?posted=1',timeout=15000)
   page.get_by_text('Fantastic services. Helpful team and transparent pricing.',exact=False).first.wait_for(timeout=15000)
+  compact(page)
   cap(page,'added_review.png')
  else:
   page.locator('#postBtn').click()
@@ -75,6 +103,7 @@ def journey(context,base,deployed=False):
   page.locator('#submitReview').click()
   page.wait_for_url('**/djangoapp/reviews/dealer/*?posted=1',timeout=15000)
   page.get_by_text('Fantastic services. Excellent support',exact=False).first.wait_for(timeout=15000)
+  compact(page)
   cap(page,'deployed_add_review.png')
  page.close()
 
@@ -103,15 +132,18 @@ with sync_playwright() as p:
  browser=p.chromium.launch(headless=not a.headed,args=['--no-sandbox'] if sys.platform.startswith('linux') else [])
  try:
   ctx=browser.new_context(viewport={'width':1440,'height':900},device_scale_factor=1)
-  admin(ctx,a.base_url)
-  journey(ctx,a.base_url,False)
+  if not a.cloud_only:
+   admin(ctx,a.base_url)
+   journey(ctx,a.base_url,False)
   if a.deployment_url:
    if not a.deployment_url.startswith('https://'):
     raise RuntimeError('--deployment-url must be a real public HTTPS URL')
    depctx=browser.new_context(viewport={'width':1440,'height':900},device_scale_factor=1)
    journey(depctx,a.deployment_url,True)
    depctx.close()
-  else:
+  elif not a.cloud_only:
    print('Q24-Q27 skipped: no verified deployment URL supplied.')
+  else:
+   raise RuntimeError('--cloud-only needs --deployment-url HTTPS address')
   ctx.close()
  finally:browser.close()
